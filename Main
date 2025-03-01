@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+
+using namespace std;
+
+const int TOTAL_PAGES = 100;
+const int PAGE_SIZE_MB = 160;
+const int TOTAL_MEMORY_MB = TOTAL_PAGES * PAGE_SIZE_MB;
+const int START_ADDRESS = 2000;
+
+struct Process {
+    int id;
+    int startAddress;
+    int sizeMB;
+    int unusedSpaceMB;
+};
+
+vector<int> memory(TOTAL_PAGES, -1); // -1 indicates empty page
+vector<Process> processList;
+
+void userMemoryAllocation() {
+    srand(time(0));
+    int currentAddress = START_ADDRESS;
+    int processID = 1;
+
+    while (true) {
+        int numPages = rand() % 30 + 1; // Random number between 1 and 30
+        int processSizeMB = numPages * 80;
+        int pagesNeeded = ceil((double)processSizeMB / PAGE_SIZE_MB);
+        int totalMemoryAllocated = pagesNeeded * PAGE_SIZE_MB;
+        int unusedMemory = totalMemoryAllocated - processSizeMB;
+
+        // Check if enough pages are available
+        int freePages = 0;
+        for (int i = 0; i < TOTAL_PAGES; i++) {
+            if (memory[i] == -1) freePages++;
+        }
+        if (freePages < pagesNeeded) break; // Stop allocation if memory is full
+
+        // Allocate memory pages
+        int allocatedPages = 0;
+        for (int i = 0; i < TOTAL_PAGES && allocatedPages < pagesNeeded; i++) {
+            if (memory[i] == -1) {
+                memory[i] = processID;
+                allocatedPages++;
+            }
+        }
+
+        // Store process details
+        processList.push_back({processID, currentAddress, processSizeMB, unusedMemory});
+        currentAddress += totalMemoryAllocated;
+        processID++;
+    }
+}
+
+void printSummary() {
+    cout << "Process Id\tStarting Memory Address\tSize of the Process MB\tUnused Space MB" << endl;
+    for (const auto &process : processList) {
+        cout << process.id << "\t\t" << process.startAddress << "\t\t\t" << process.sizeMB << "\t\t\t" << process.unusedSpaceMB << endl;
+    }
+}
+
+int main() {
+    userMemoryAllocation();
+    printSummary();
+    return 0;
+}
